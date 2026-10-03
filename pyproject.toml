@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hevy-exgen"
+version = "0.1.0"
+description = "Generate metadata, images and demo GIFs for custom Hevy exercises using generative AI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=1.11",
+    "openai>=3.24",
+    "pillow>=10",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+hevy-exgen = "hevy_exgen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
