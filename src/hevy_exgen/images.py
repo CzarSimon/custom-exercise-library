@@ -14,6 +14,19 @@ from .models import ExerciseSpec, KeyFrame
 
 DEFAULT_IMAGE_MODEL = "gpt-image-2"
 
+# Shorthands people type that aren't real API model IDs. Sunburst is OpenAI's
+# higher-quality 2.5 model and is better at keeping a subject consistent across
+# edits, which is how the GIF frames are made.
+MODEL_ALIASES = {
+    "gpt-image-2.5": "gpt-image-2.5-sunburst",
+    "sunburst": "gpt-image-2.5-sunburst",
+    "flare": "gpt-image-2.5-flare",
+}
+
+
+def resolve_model(name: str) -> str:
+    return MODEL_ALIASES.get(name.strip().lower(), name)
+
 DEFAULT_STYLE = (
     "Clean, modern flat-vector fitness illustration in the style of a workout app's exercise "
     "library. One athletic, gender-neutral figure in plain dark-grey training clothes and "

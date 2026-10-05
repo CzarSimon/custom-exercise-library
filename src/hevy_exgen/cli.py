@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import gif, hevy_api, images, metadata, output
+from . import env, gif, hevy_api, images, metadata, output
 
 DEFAULT_OUT = Path("exercises")
 
@@ -60,8 +60,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _image_generator(args) -> images.ImageGenerator:
+    model = images.resolve_model(args.image_model)
+    if model != args.image_model:
+        print(f"  using image model {model} for {args.image_model!r}")
     return images.ImageGenerator(
-        model=args.image_model,
+        model=model,
         quality=args.quality,
         style=args.style or images.DEFAULT_STYLE,
     )
@@ -93,7 +96,23 @@ def _assemble(spec, out_dir: Path, frames: list[Path], args) -> None:
     print(f"  wrote {path}")
 
 
+def _check_keys(need_anthropic: bool, need_openai: bool) -> bool:
+    missing = [k for k in env.missing_keys(need_openai) if need_anthropic or k != "ANTHROPIC_API_KEY"]
+    if not missing:
+        return True
+    where = f" (loaded {env.LOADED})" if env.LOADED else " (no .env file found)"
+    print(f"Missing {', '.join(missing)}{where}.", file=sys.stderr)
+    print(
+        "Put them in a .env file in the directory you run hevy-exgen from (or the repo root), "
+        "or export them in your shell. See .env.example.",
+        file=sys.stderr,
+    )
+    return False
+
+
 def cmd_generate(args) -> int:
+    if not _check_keys(need_anthropic=True, need_openai=not args.metadata_only):
+        return 2
     failures = 0
     for name in args.names:
         out_dir = args.out / output.slugify(name)
@@ -130,6 +149,8 @@ def cmd_generate(args) -> int:
 
 
 def cmd_images(args) -> int:
+    if not _check_keys(need_anthropic=False, need_openai=True):
+        return 2
     spec = output.load_spec(args.dir)
     print(f"[{spec.name}] drawing images...")
     _draw(spec, args.dir, args)
@@ -164,6 +185,7 @@ def _upload(spec) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    env.LOADED = env.load_dotenv()
     handler = {"generate": cmd_generate, "images": cmd_images, "gif": cmd_gif, "upload": cmd_upload}
     return handler[args.command](args)
 

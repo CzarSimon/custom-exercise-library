@@ -54,12 +54,14 @@ Notes on the design:
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'
-cp .env.example .env   # fill in, then: export $(grep -v '^#' .env | xargs)
+cp .env.example .env   # then fill in your keys
 ```
+
+`hevy-exgen` reads `.env` automatically. It looks in the directory you run it from, then that directory's parents, then the repo root. A key you've already exported in your shell takes priority; an empty one doesn't. If a key is missing, the tool stops before making any API calls and says which key it is.
 
 | Variable | Needed for |
 |---|---|
-| `ANTHROPIC_API_KEY` | Metadata, always required (or `ant auth login`) |
+| `ANTHROPIC_API_KEY` | Metadata. Always required, unless you've logged in with `ant auth login` |
 | `OPENAI_API_KEY` | Image and GIF |
 | `HEVY_API_KEY` | Optional upload; needs Hevy Pro (Settings → Developer) |
 
@@ -90,6 +92,8 @@ hevy-exgen gif exercises/pogo-hops --tweens 4
 # Create it in Hevy via the API
 hevy-exgen upload exercises/pogo-hops        # or: generate ... --upload
 ```
+
+Image models: the default is `gpt-image-2`. For OpenAI's newer models use `--image-model gpt-image-2.5-sunburst` (best quality, and best at keeping the athlete the same across frames) or `gpt-image-2.5-flare` (faster and cheaper). `gpt-image-2.5` on its own is accepted as shorthand for Sunburst.
 
 Useful flags: `--effort` (Claude effort, default `medium`), `--model`, `--image-model`, `--quality low|medium|high`, `--style "<custom illustration style>"`, `--gif-size`, `--out`, `--force`.
 

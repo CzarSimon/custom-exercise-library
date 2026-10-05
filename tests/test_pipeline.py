@@ -135,6 +135,8 @@ def test_cli_generate_end_to_end(tmp_path, monkeypatch):
     monkeypatch.setattr(cli.metadata, "generate_spec", lambda *a, **k: spec)
     fake = FakeImages()
     monkeypatch.setattr(cli.images.openai, "OpenAI", lambda: SimpleNamespace(images=fake))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
 
     rc = cli.main(["generate", "calf raise", "--out", str(tmp_path), "--gif-size", "64"])
     assert rc == 0
@@ -154,3 +156,46 @@ def test_cli_generate_end_to_end(tmp_path, monkeypatch):
 
 def test_slugify():
     assert output.slugify("Pogo Hops (Single-Leg)") == "pogo-hops-single-leg"
+
+
+def test_dotenv_loading_and_key_check(tmp_path, monkeypatch):
+    from hevy_exgen import env
+
+    monkeypatch.setenv("HOME", str(tmp_path))  # no `ant` profile
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")  # empty in shell: .env should win
+    monkeypatch.setenv("OPENAI_API_KEY", "from-shell")  # non-empty in shell: shell wins
+    monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
+    dotenv = tmp_path / ".env"
+    dotenv.write_text('# keys\nexport ANTHROPIC_API_KEY="sk-ant-test"\nOPENAI_API_KEY=from-file\nHEVY_API_KEY=\n')
+
+    nested = tmp_path / "sub" / "dir"
+    nested.mkdir(parents=True)
+    assert env.find_dotenv(nested) == dotenv
+    assert env.load_dotenv(dotenv) == dotenv
+    import os
+
+    assert os.environ["ANTHROPIC_API_KEY"] == "sk-ant-test"
+    assert os.environ["OPENAI_API_KEY"] == "from-shell"
+    assert env.missing_keys(need_openai=True) == []
+
+    monkeypatch.setenv("OPENAI_API_KEY", "")
+    assert env.missing_keys(need_openai=True) == ["OPENAI_API_KEY"]
+
+
+def test_cli_fails_fast_without_keys(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for k in ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY"]:
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(cli.env, "find_dotenv", lambda start=None: None)
+    called = []
+    monkeypatch.setattr(cli.metadata, "generate_spec", lambda *a, **k: called.append(1))
+
+    assert cli.main(["generate", "Pogo jumps"]) == 2
+    assert not called
+    assert "Missing ANTHROPIC_API_KEY, OPENAI_API_KEY" in capsys.readouterr().err
+
+
+def test_image_model_aliases():
+    assert images.resolve_model("gpt-image-2.5") == "gpt-image-2.5-sunburst"
+    assert images.resolve_model("gpt-image-2") == "gpt-image-2"
