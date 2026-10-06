@@ -56,6 +56,12 @@ def build_parser() -> argparse.ArgumentParser:
     u = sub.add_parser("upload", help="Create the exercise in Hevy from an exercise folder")
     u.add_argument("dir", type=Path)
 
+    s = sub.add_parser("serve", help="Open a local web UI to browse exercises and copy fields into Hevy")
+    s.add_argument("--dir", type=Path, default=DEFAULT_OUT, help="Exercises folder (default: %(default)s)")
+    s.add_argument("--port", type=int, default=8765, help="Port (default: %(default)s)")
+    s.add_argument("--lan", action="store_true", help="Also reachable from your phone on the same Wi-Fi")
+    s.add_argument("--no-browser", action="store_true", help="Don't open a browser window")
+
     return parser
 
 
@@ -183,10 +189,20 @@ def _upload(spec) -> int:
     return 0
 
 
+def cmd_serve(args) -> int:
+    from .server import serve
+
+    if not args.dir.is_dir():
+        print(f"{args.dir} doesn't exist yet; generate an exercise first or pass --dir.", file=sys.stderr)
+        return 1
+    serve(args.dir, host="0.0.0.0" if args.lan else "127.0.0.1", port=args.port, open_browser=not args.no_browser)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     env.LOADED = env.load_dotenv()
-    handler = {"generate": cmd_generate, "images": cmd_images, "gif": cmd_gif, "upload": cmd_upload}
+    handler = {"generate": cmd_generate, "images": cmd_images, "gif": cmd_gif, "upload": cmd_upload, "serve": cmd_serve}
     return handler[args.command](args)
 
 

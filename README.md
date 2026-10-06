@@ -97,6 +97,22 @@ Image models: the default is `gpt-image-2`. For OpenAI's newer models use `--ima
 
 Useful flags: `--effort` (Claude effort, default `medium`), `--model`, `--image-model`, `--quality low|medium|high`, `--style "<custom illustration style>"`, `--gif-size`, `--out`, `--force`.
 
+### Browse and copy into Hevy (local UI)
+
+```bash
+hevy-exgen serve            # opens http://127.0.0.1:8765/
+hevy-exgen serve --lan      # also prints a URL for your phone on the same Wi-Fi
+```
+
+The UI lists your exercises, with a search box. Click one to see:
+
+- **The image and GIF**, with *Download* buttons (and *Copy image* on the computer running the server).
+- **The Hevy fields**: name, equipment, primary muscle group, other muscles and exercise type. Each has a *Copy* button.
+- **The notes**: description, setup, execution, cues and prescription, as one block to paste into the exercise notes in your routine.
+- **An "Added to Hevy" checkbox**, saved to `exercises/<slug>/status.json`. *Hide exercises already in Hevy* in the sidebar then hides them, leaving the ones you still have to add.
+
+Hevy is mostly used on a phone, so `--lan` makes the UI reachable from your phone. There you can save the image to your photos (Download, or long-press it) and then pick it in Hevy's Create Exercise screen. The page is served over plain http, and phone browsers don't allow images to be copied to the clipboard from such pages, so the *Copy image* button is hidden there. Text copying still works.
+
 ### Getting it into Hevy
 
 Hevy's public API can only create an exercise with a **title, exercise type, equipment, primary muscle group and other muscles**. It has no field for an image or a description. So you can either:

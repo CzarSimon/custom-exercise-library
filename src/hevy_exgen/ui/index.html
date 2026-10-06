@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exercise Library</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #16181d; --muted: #646b78; --line: #e3e6eb;
+    --accent: #2f6fed; --accent-soft: #e8f0ff; --ok: #1a8f4c; --ok-soft: #e4f5ea;
+    --primary-m: #d6332b; --secondary-m: #e8892b; --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101216; --panel: #181b21; --text: #e9ebef; --muted: #9aa1ad; --line: #2a2f38;
+      --accent: #6b9bff; --accent-soft: #1d2a45; --ok: #4cc584; --ok-soft: #173326;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  button { font: inherit; color: inherit; }
+  .app { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+  aside { border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  .aside-head { padding: 16px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+  .aside-head h1 { font-size: 17px; margin: 0; }
+  input[type=search] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+  .filter { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+  .list { overflow-y: auto; flex: 1; padding: 6px; }
+  .item { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 10px; cursor: pointer; text-decoration: none; color: inherit; }
+  .item:hover { background: var(--bg); }
+  .item.active { background: var(--accent-soft); }
+  .thumb { width: 48px; height: 48px; border-radius: 8px; background: var(--bg); object-fit: cover; flex: none; border: 1px solid var(--line); }
+  .item .meta { min-width: 0; flex: 1; }
+  .item .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .sub { color: var(--muted); font-size: 13px; }
+  .tick { color: var(--ok); font-weight: 700; flex: none; }
+  main { overflow-y: auto; min-width: 0; }
+  .detail { max-width: 980px; margin: 0 auto; padding: 24px; display: grid; gap: 18px; }
+  .btn.back { display: none; }
+  .title-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .title-row h2 { margin: 0; font-size: 24px; line-height: 1.25; flex: 1; min-width: 200px; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .added-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+  .added-toggle.on { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .card h3 { margin: 0 0 4px; font-size: 15px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .media { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .media figure { margin: 0; display: grid; gap: 10px; }
+  .media img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #fafaf8; border-radius: 10px; border: 1px solid var(--line); }
+  .media figcaption { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .media .label { font-weight: 600; margin-right: auto; }
+  .placeholder { aspect-ratio: 1; display: grid; place-items: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; text-align: center; padding: 16px; font-size: 13px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; text-decoration: none; color: var(--text); font-size: 13px; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.done { border-color: var(--ok); color: var(--ok); }
+  .fields { display: grid; }
+  .field { display: grid; grid-template-columns: 170px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .field:first-child { border-top: 0; }
+  .field .k { color: var(--muted); font-size: 13px; }
+  .field .v { font-weight: 600; overflow-wrap: anywhere; }
+  pre.notes { white-space: pre-wrap; font: inherit; margin: 0 0 12px; padding: 12px; background: var(--bg); border-radius: 8px; max-height: 320px; overflow-y: auto; }
+  .card-head { display: flex; align-items: flex-start; gap: 12px; }
+  .card-head > div { flex: 1; }
+  .muscles { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+  .chip { font-size: 13px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
+  .chip.p { border-color: var(--primary-m); color: var(--primary-m); }
+  .chip.s { border-color: var(--secondary-m); color: var(--secondary-m); }
+  .info h4 { margin: 14px 0 4px; font-size: 14px; }
+  .info ol, .info ul { margin: 0; padding-left: 20px; }
+  .info p { margin: 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  .frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+  .frames a { display: grid; gap: 4px; color: var(--muted); font-size: 12px; text-decoration: none; }
+  .frames img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #fafaf8; border: 1px solid var(--line); border-radius: 8px; }
+  .empty { color: var(--muted); padding: 48px 24px; text-align: center; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+    aside { border-right: 0; }
+    .app.has-detail aside { display: none; }
+    .app:not(.has-detail) main { display: none; }
+    .btn.back { display: inline-flex; }
+    .media .label { flex-basis: 100%; }
+    .detail { padding: 16px; }
+    .media { grid-template-columns: 1fr; }
+    .field { grid-template-columns: 1fr auto; }
+    .field .k { grid-column: 1 / -1; margin-bottom: -10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside>
+    <div class="aside-head">
+      <h1>Exercise Library</h1>
+      <input type="search" id="search" placeholder="Search exercises" autocomplete="off">
+      <label class="filter"><input type="checkbox" id="hideAdded"> Hide exercises already in Hevy</label>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+  <main id="main"><div class="empty">Select an exercise.</div></main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORY = {
+  lower_body_strength: "Lower-body strength", calf_isolation: "Calf isolation",
+  olympic_lift: "Olympic lift", plyometric: "Plyometric", other: "Other",
+};
+const $ = (s) => document.querySelector(s);
+let exercises = [];
+
+function el(tag, attrs = {}, ...children) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat()) if (c != null) n.append(c instanceof Node ? c : document.createTextNode(c));
+  return n;
+}
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_) { /* fall through */ }
+  // Fallback for plain-http LAN access (e.g. from a phone), where the Clipboard API is unavailable.
+  const ta = el("textarea", { style: "position:fixed;top:0;left:0;opacity:0" });
+  ta.value = text;
+  document.body.append(ta);
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (_) {}
+  ta.remove();
+  return ok;
+}
+
+function copyButton(text, label = "Copy") {
+  const b = el("button", { class: "btn", type: "button" }, label);
+  b.addEventListener("click", async () => {
+    const ok = await copyText(text);
+    toast(ok ? "Copied" : "Copy failed: select the text manually");
+    if (ok) { b.textContent = "Copied ✓"; b.classList.add("done"); setTimeout(() => { b.textContent = label; b.classList.remove("done"); }, 1400); }
+  });
+  return b;
+}
+
+function copyImageButton(url) {
+  if (!(window.isSecureContext && navigator.clipboard && window.ClipboardItem)) return null;
+  const b = el("button", { class: "btn", type: "button" }, "Copy image");
+  b.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": fetch(url).then((r) => r.blob()) })]);
+      toast("Image copied");
+    } catch (_) { toast("Couldn't copy the image; use Download"); }
+  });
+  return b;
+}
+
+async function loadList() {
+  exercises = await (await fetch("/api/exercises")).json();
+  renderList();
+}
+
+function renderList() {
+  const q = $("#search").value.trim().toLowerCase();
+  const hide = $("#hideAdded").checked;
+  const current = decodeURIComponent(location.hash.slice(2));
+  const shown = exercises.filter((e) =>
+    (!q || e.name.toLowerCase().includes(q) || (e.muscle_group || "").toLowerCase().includes(q)) &&
+    (!hide || !e.added_to_hevy || e.slug === current));
+  const list = $("#list");
+  list.replaceChildren();
+  if (!exercises.length) {
+    list.append(el("div", { class: "empty" }, "No exercises yet. Run ", el("code", {}, 'hevy-exgen generate "…"'), " first."));
+    return;
+  }
+  if (!shown.length) { list.append(el("div", { class: "empty" }, "No matches.")); return; }
+  for (const e of shown) {
+    list.append(el("a", { class: "item" + (e.slug === current ? " active" : ""), href: "#/" + encodeURIComponent(e.slug) },
+      e.thumb ? el("img", { class: "thumb", src: e.thumb, alt: "", loading: "lazy" }) : el("div", { class: "thumb" }),
+      el("div", { class: "meta" },
+        el("div", { class: "name" }, e.name),
+        el("div", { class: "sub" }, e.error || [CATEGORY[e.category] || e.category, e.muscle_group].join(" · "))),
+      e.added_to_hevy ? el("span", { class: "tick", title: "Added to Hevy" }, "✓") : null));
+  }
+}
+
+function mediaFigure(label, url, slug, ext, missingHint) {
+  if (!url) return el("figure", {}, el("div", { class: "placeholder" }, missingHint), el("figcaption", {}, el("span", { class: "label" }, label)));
+  return el("figure", {},
+    el("img", { src: url, alt: label }),
+    el("figcaption", {},
+      el("span", { class: "label" }, label),
+      ext === "png" ? copyImageButton(url) : null,
+      el("a", { class: "btn primary", href: url, download: `${slug}.${ext}` }, "Download")));
+}
+
+function list(tag, items) { return el(tag, {}, items.map((i) => el("li", {}, i))); }
+
+async function showDetail(slug) {
+  const main = $("#main");
+  $("#app").classList.add("has-detail");
+  const res = await fetch("/api/exercises/" + encodeURIComponent(slug));
+  if (!res.ok) { main.replaceChildren(el("div", { class: "empty" }, "Exercise not found.")); return; }
+  const d = await res.json();
+  const s = d.spec;
+
+  const toggle = el("button", { class: "added-toggle" + (d.added_to_hevy ? " on" : ""), type: "button" });
+  const paintToggle = (on) => { toggle.classList.toggle("on", on); toggle.textContent = on ? "✓ Added to Hevy" : "Mark as added to Hevy"; };
+  paintToggle(d.added_to_hevy);
+  toggle.addEventListener("click", async () => {
+    const on = !toggle.classList.contains("on");
+    const r = await fetch(`/api/exercises/${encodeURIComponent(slug)}/status`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ added_to_hevy: on }) });
+    if (!r.ok) { toast("Couldn't save"); return; }
+    paintToggle(on);
+    const e = exercises.find((x) => x.slug === slug);
+    if (e) e.added_to_hevy = on;
+    renderList();
+  });
+
+  const allFields = d.hevy_fields.map((f) => `${f.label}: ${f.value}`).join("\n");
+
+  main.replaceChildren(el("div", { class: "detail" },
+    el("div", {}, el("a", { class: "btn back", href: "#" }, "← All exercises")),
+    el("div", { class: "title-row" },
+      el("div", { style: "flex:1;min-width:200px" },
+        el("h2", {}, s.name),
+        el("span", { class: "badge" }, CATEGORY[s.category] || s.category)),
+      toggle),
+
+    el("div", { class: "card media" },
+      mediaFigure("Exercise image", d.image, slug, "png", el("span", {}, "No image yet. Run ", el("code", {}, `hevy-exgen images exercises/${slug}`))),
+      mediaFigure("Demo GIF", d.gif, slug, "gif", "No GIF yet.")),
+
+    el("div", { class: "card" },
+      el("div", { class: "card-head" },
+        el("div", {},
+          el("h3", {}, "Hevy fields"),
+          el("p", { class: "hint" }, "In Hevy: Exercises → Create Exercise. Set the image from the downloaded PNG, then copy each field across.")),
+        copyButton(allFields, "Copy all")),
+      el("div", { class: "fields" }, d.hevy_fields.map((f) =>
+        el("div", { class: "field" }, el("span", { class: "k" }, f.label), el("span", { class: "v" }, f.value), copyButton(f.value))))),
+
+    el("div", { class: "card" },
+      el("div", { class: "card-head" },
+        el("div", {},
+          el("h3", {}, "Notes"),
+          el("p", { class: "hint" }, "Paste into the exercise's notes in your routine.")),
+        copyButton(d.notes, "Copy notes")),
+      el("pre", { class: "notes" }, d.notes),
+      el("div", { class: "card-head" },
+        el("div", {}, el("p", { class: "hint", style: "margin:0" }, "Short description only:")),
+        copyButton(s.description, "Copy description"))),
+
+    el("div", { class: "card info" },
+      el("h3", {}, "Muscles"),
+      el("div", { class: "muscles" },
+        s.primary_muscles.map((m) => el("span", { class: "chip p", title: "Primary" }, m.name)),
+        s.secondary_muscles.map((m) => el("span", { class: "chip s", title: "Secondary" }, m.name))),
+      el("h4", {}, "Setup"), list("ol", s.setup),
+      el("h4", {}, "Execution"), list("ol", s.execution),
+      el("h4", {}, "Coaching cues"), list("ul", s.coaching_cues),
+      el("h4", {}, "Common mistakes"), list("ul", s.common_mistakes),
+      el("h4", {}, "Why it matters for running"), el("p", {}, s.runner_rationale),
+      el("h4", {}, "Suggested prescription"), el("p", {}, s.suggested_prescription),
+      el("h4", {}, "Progressions"), list("ul", s.progressions)),
+
+    d.frames.length ? el("details", { class: "card" },
+      el("summary", {}, `Keyframes (${d.frames.length})`),
+      el("div", { class: "frames" }, d.frames.map((u, i) =>
+        el("a", { href: u, target: "_blank" }, el("img", { src: u, alt: "", loading: "lazy" }),
+          s.visual.keyframes[i] ? s.visual.keyframes[i].label : u.split("/").pop())))) : null,
+  ));
+  main.scrollTop = 0;
+}
+
+function route() {
+  const slug = decodeURIComponent(location.hash.slice(2));
+  renderList();
+  if (slug) showDetail(slug);
+  else {
+    $("#app").classList.remove("has-detail");
+    $("#main").replaceChildren(el("div", { class: "empty" }, exercises.length ? "Select an exercise." : ""));
+  }
+}
+
+$("#search").addEventListener("input", renderList);
+$("#hideAdded").addEventListener("change", renderList);
+window.addEventListener("hashchange", route);
+loadList().then(() => {
+  if (!location.hash && exercises.length && window.innerWidth > 760) location.hash = "#/" + encodeURIComponent(exercises[0].slug);
+  else route();
+});
+</script>
+</body>
+</html>
